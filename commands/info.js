@@ -10,8 +10,8 @@ module.exports = {
         const botAvatar = client.user.displayAvatarURL({ dynamic: true });
 
         // --- ALGORITM DE ACTUALIZARE AUTOMATĂ A COMENZILOR SLASH ---
-        // Ascundem complet comenzile administrative din lista publică afișată utilizatorilor
-        const hiddenCommands = ['setmoney', 'antispam', 'antibot'];
+        // Ascundem comenzile administrative sau cele care nu trebuie să apară public în listă
+        const hiddenCommands = ['setmoney', 'antispam', 'antibot', 'checkbalance', 'cs2clip', 'postnow'];
         
         const publicSlashCommands = client.commands
             .filter(cmd => !hiddenCommands.includes(cmd.data.name))

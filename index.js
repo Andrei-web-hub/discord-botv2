@@ -140,24 +140,26 @@ client.on("voiceStateUpdate", (oldState, newState) => {
 });
 
 // ==========================================
-// 7. READY EVENT & DEPLOY AUTOMAT COMENZI
+// 7. READY EVENT & DEPLOY AUTOMAT COMENZI (PE GUILD)
 // ==========================================
 const onReady = async () => {
     console.log(`✅ [Discord] Botul este online ca ${client.user.tag}!`);
 
-    // --- ÎNREGISTRARE AUTOMATĂ A COMENZILOR PE DISCORD LA PORNIRE ---
     const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
     try {
-        console.log('🔄 Se actualizează comenziile Slash pe Discord...');
-        await rest.put(
-            Routes.applicationCommands(client.user.id),
-            { body: commandsArray },
-        );
-        console.log('✨ Toate comenzile au fost înregistrate cu succes pe Discord!');
+        console.log('🔄 Se actualizează comenzile instant pe servere...');
+        
+        // Înregistrăm comenzile pe fiecare server în parte pentru a aplica instant permisiunile
+        for (const guildId of client.guilds.cache.keys()) {
+            await rest.put(
+                Routes.applicationGuildCommands(client.user.id, guildId),
+                { body: commandsArray },
+            );
+        }
+        console.log('✨ Toate comenzile au fost înregistrate instant pe servere!');
     } catch (error) {
         console.error('❌ Eroare la înregistrarea comenzilor:', error);
     }
-    // -------------------------------------------------------------
 
     // Programarea automată (cron job): rulează în fiecare zi la ora 12:00 PM
     cron.schedule('0 12 * * *', async () => {

@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, Collection, Partials } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, Partials, REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
@@ -60,6 +60,8 @@ function saveConfig() {
 // 3. ÎNCĂRCARE COMANDE SLASH DIN FOLDERUL /commands
 // ==========================================
 const commandsPath = path.join(__dirname, 'commands');
+const commandsArray = [];
+
 if (fs.existsSync(commandsPath)) {
     const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
     for (const file of commandFiles) {
@@ -67,6 +69,7 @@ if (fs.existsSync(commandsPath)) {
         const command = require(filePath);
         if ('data' in command && 'execute' in command) {
             client.commands.set(command.data.name, command);
+            commandsArray.push(command.data.toJSON());
         }
     }
 }
@@ -137,10 +140,24 @@ client.on("voiceStateUpdate", (oldState, newState) => {
 });
 
 // ==========================================
-// 7. READY EVENT & CRON JOB AUTOMAT CS2
+// 7. READY EVENT & DEPLOY AUTOMAT COMENZI
 // ==========================================
 const onReady = async () => {
-    console.log(`✅ [Discord] Botul este online ca ${client.user.tag}![cite: 1]`);
+    console.log(`✅ [Discord] Botul este online ca ${client.user.tag}!`);
+
+    // --- ÎNREGISTRARE AUTOMATĂ A COMENZILOR PE DISCORD LA PORNIRE ---
+    const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+    try {
+        console.log('🔄 Se actualizează comenziile Slash pe Discord...');
+        await rest.put(
+            Routes.applicationCommands(client.user.id),
+            { body: commandsArray },
+        );
+        console.log('✨ Toate comenzile au fost înregistrate cu succes pe Discord!');
+    } catch (error) {
+        console.error('❌ Eroare la înregistrarea comenzilor:', error);
+    }
+    // -------------------------------------------------------------
 
     // Programarea automată (cron job): rulează în fiecare zi la ora 12:00 PM
     cron.schedule('0 12 * * *', async () => {
